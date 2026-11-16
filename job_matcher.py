@@ -9,12 +9,16 @@ from jobspy import scrape_jobs
 from google import genai
 from google.genai import types
 
-# --- 1. CUSTOMIZE YOUR PROFILE & SEARCH ---
+# --- 1. CUstomise Profile
 SEARCH_TERMS = ["Operations Analyst", "Global Trade Compliance", "Supply Chain Analyst", "Marketing Analyst", "GTM", "Business Analyst", "Growth", "Business Management Associate", "Strategy", "SAP"]
-LOCATION = "Bengaluru, Karnataka, India"
 COUNTRY_INDEED = "India"
 RESULTS_PER_TERM = 15
-MIN_SCORE = 8  # Only email jobs scoring 8/10 or higher
+MIN_SCORE = 8  
+
+SEARCH_TARGETS = [
+    {"location": "Bengaluru, Karnataka, India", "is_remote": False, "label": "Bengaluru"},
+    {"location": "India", "is_remote": True, "label": "Remote"},
+]
 
 MY_CV = """
 Operations Analyst with hands-on experience in trade compliance, inventory optimization, and data-driven process improvement.
@@ -74,31 +78,37 @@ class JobMatch(BaseModel):
     reason: str = Field(description="One concise sentence explaining why it fits.")
     missing_skills: list[str] = Field(description="Key requirements missing from the CV.")
 
-# --- 3. SCRAPE FRESH JOBS (LAST 24 HOURS) ---
+# --- 3. (LAST 24 HOURS Jobs) ---
 def fetch_recent_jobs():
     all_jobs = []
+    sites = ["indeed", "linkedin", "naukri"]
+
     for term in SEARCH_TERMS:
-        print(f"Scraping: {term}...")
-        try:
-            df = scrape_jobs(
-                site_name=["indeed", "linkedin", "naukri", "glassdoor"],
-                search_term=term,
-                location=LOCATION,
-                country_indeed=COUNTRY_INDEED,
-                results_wanted=RESULTS_PER_TERM,
-                hours_old=24,
-                fetch_description=True,
-            )
-            if df is not None and not df.empty:
-                all_jobs.append(df)
-        except Exception as e:
-            print(f"Error scraping {term}: {e}")
+        for target in SEARCH_TARGETS:
+            print(f"Scraping '{term}' ({target['label']})...")
+            for site in sites:
+                try:
+                    df = scrape_jobs(
+                        site_name=[site],
+                        search_term=term,
+                        location=target["location"],
+                        is_remote=target["is_remote"],
+                        country_indeed=COUNTRY_INDEED,
+                        results_wanted=RESULTS_PER_TERM,
+                        hours_old=24,
+                        fetch_description=True,
+                    )
+                    if df is not None and not df.empty:
+                        all_jobs.append(df)
+                except Exception as e:
+                    print(f"Skipping {site} for '{term}' ({target['label']}): {e}")
+
     if not all_jobs:
         return pd.DataFrame()
     combined = pd.concat(all_jobs, ignore_index=True)
     return combined.drop_duplicates(subset=["job_url"])
 
-# --- 4. SCORE JOBS WITH GEMINI FREE TIER ---
+# --- SCORE JOBS---
 def evaluate_jobs(jobs_df):
     client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
     matches = []
@@ -111,18 +121,20 @@ def evaluate_jobs(jobs_df):
         prompt = f"""
         Evaluate this job against my CV. Score 1-10 strictly on required experience,
         domain alignment, and skills. Penalize roles requiring mandatory skills I lack.
+        Note: I am only looking for roles based in Bengaluru/Bangalore or Remote.
 
         MY CV:
         {MY_CV}
 
         JOB TITLE: {row.get('title')}
         COMPANY: {row.get('company')}
+        LOCATION: {row.get('location')}
         DESCRIPTION:
         {description[:4000]}
         """
         try:
             response = client.models.generate_content(
-                model="gemini-3.5-flash-lite",
+                model="gemini-2.5-flash",
                 contents=prompt,
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -169,7 +181,7 @@ def send_email(matches):
         """
 
     msg = MIMEMultipart("alternative")
-    msg["Subject"] = f"Daily Job Matches: {len(matches)} Strong Fits Found"
+    msg["Subject"] = f"Daily Job Matches: {len(matches)} Strong Fits (Bengaluru & Remote)"
     msg["From"] = sender
     msg["To"] = sender
     msg.attach(MIMEText(f"<h2>Your Top CV Matches (Last 24h)</h2>{html_items}", "html"))
