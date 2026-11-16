@@ -10,8 +10,8 @@ from google import genai
 from google.genai import types
 
 # --- 1. CUSTOMIZE YOUR PROFILE & SEARCH ---
-SEARCH_TERMS = ["Operations Analyst", "Global Trade Compliance", "Supply Chain Analyst"]
-LOCATION = "India"
+SEARCH_TERMS = ["Operations Analyst", "Global Trade Compliance", "Supply Chain Analyst", "Marketing Analyst", "GTM", "Business Analyst", "Growth", "Business Management Associate", "Strategy", "SAP"]
+LOCATION = "Bengaluru, Karnataka, India"
 COUNTRY_INDEED = "India"
 RESULTS_PER_TERM = 15
 MIN_SCORE = 8  # Only email jobs scoring 8/10 or higher
@@ -87,7 +87,7 @@ def fetch_recent_jobs():
                 country_indeed=COUNTRY_INDEED,
                 results_wanted=RESULTS_PER_TERM,
                 hours_old=24,
-                linkedin_fetch_description=True,
+                fetch_description=True,
             )
             if df is not None and not df.empty:
                 all_jobs.append(df)
