@@ -9,7 +9,7 @@ from jobspy import scrape_jobs
 from google import genai
 from google.genai import types
 
-# --- 1. CUstomise Profile
+# CUstomise Profile
 SEARCH_TERMS = ["Operations Analyst", "Global Trade Compliance", "Supply Chain Analyst", "Marketing Analyst", "GTM", "Business Analyst", "Growth", "Business Management Associate", "Strategy", "SAP"]
 COUNTRY_INDEED = "India"
 RESULTS_PER_TERM = 15
@@ -78,7 +78,7 @@ class JobMatch(BaseModel):
     reason: str = Field(description="One concise sentence explaining why it fits.")
     missing_skills: list[str] = Field(description="Key requirements missing from the CV.")
 
-# --- 3. (LAST 24 HOURS Jobs) ---
+# LAST 24 HOURS Jobs
 def fetch_recent_jobs():
     all_jobs = []
     sites = ["indeed", "linkedin", "google", "naukri"]
@@ -159,7 +159,7 @@ def evaluate_jobs(jobs_df):
 
     return sorted(matches, key=lambda x: x["score"], reverse=True)
 
-# --- 5. SEND EMAIL DIGEST ---
+# Send Email
 def send_email(matches):
     if not matches:
         print("No high-scoring matches today.")
