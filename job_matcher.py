@@ -81,7 +81,7 @@ def fetch_recent_jobs():
         print(f"Scraping: {term}...")
         try:
             df = scrape_jobs(
-                site_name=["indeed", "linkedin", "glassdoor"],
+                site_name=["indeed", "linkedin", "naukri", "glassdoor"],
                 search_term=term,
                 location=LOCATION,
                 country_indeed=COUNTRY_INDEED,
