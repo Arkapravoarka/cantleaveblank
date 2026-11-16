@@ -81,7 +81,7 @@ class JobMatch(BaseModel):
 # --- 3. (LAST 24 HOURS Jobs) ---
 def fetch_recent_jobs():
     all_jobs = []
-    sites = ["indeed", "linkedin", "naukri"]
+    sites = ["indeed", "linkedin", "google", "naukri"]
 
     for term in SEARCH_TERMS:
         for target in SEARCH_TARGETS:
